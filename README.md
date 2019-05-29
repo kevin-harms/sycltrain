@@ -1,2 +1,2 @@
 # sycltrain
-Training examples for SYCL
+Training examples for SYCL!
