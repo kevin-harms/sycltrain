@@ -11,7 +11,11 @@ int main() {
   std::cout << "Running on "
             << myQueue.get_device().get_info<cl::sycl::info::device::name>()
             << "\n";
-
+//         __                     ___          
+//  /\    (_  o ._ _  ._  |  _     |  _.  _ |  
+// /--\   __) | | | | |_) | (/_    | (_| _> |< 
+//                    |                        
+                                    
   //Create a command_group to issue command to the group
   myQueue.submit([&](cl::sycl::handler& cgh) {
     cgh.single_task<class hello_world>([=]() {
