@@ -5,6 +5,8 @@ int main(int argc, char** argv) {
 
    const auto global_range =  (size_t) atoi(argv[1]);
 
+   const auto in_order =  (bool) atoi(argv[2]);
+
 
    // Crrate array
    int A[global_range];
@@ -19,8 +21,8 @@ int main(int argc, char** argv) {
   cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA(A, global_range);
   cl::sycl::buffer<cl::sycl::cl_int, 1> bufferB(B, global_range);
   
-  //cl::sycl::buffer<cl::sycl::cl_int, 1> bufferAA(A, global_range);
-  auto bufferAA = bufferA;
+  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA_(A, global_range);
+  auto bufferAA = ( in_order ? bufferA : bufferA_ ) ;
 
   cl::sycl::queue myQueue(selector);
   std::cout << "Running on "
