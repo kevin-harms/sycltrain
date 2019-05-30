@@ -28,7 +28,7 @@ int main (int argc, char **argv)
     q.submit([&](cl::sycl::handler &h)
         {
             cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> acc = cl::sycl::accessor<int, 1,  cl::sycl::access::mode::read_write, cl::sycl::access::target::local>(cl::sycl::range<1>(SIZE), h);
-	    auto da_b = b.get_access<cl::sycl::access::mode::write>(h);
+	   // auto da_b = b.get_access<cl::sycl::access::mode::write>(h);
 
             h.parallel_for<class kernel1>(cl::sycl::range<1>(SIZE),
                 [=](cl::sycl::id<1> i)
@@ -42,7 +42,7 @@ int main (int argc, char **argv)
                     }
                     if (acc[x] != x)
                     {
-                        da_b[x] = 1;
+                        //da_b[x] = 1;
                     }
                 }
             );
