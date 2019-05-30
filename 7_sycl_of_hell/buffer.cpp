@@ -14,7 +14,8 @@ int main(int argc, char** argv) {
   cl::sycl::default_selector selector; 
   // Create your own or use `{cpu,gpu,accelerator}_selector`
   {
-  // Create sycl buffer
+  // Create sycl buffer.
+  // Trivia: What happend if we create the buffer in the outer scope?
   cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA(A, global_range);
 
   cl::sycl::queue myQueue(selector);
@@ -33,11 +34,11 @@ int main(int argc, char** argv) {
                                                              cl::sycl::range<1>(local_range) }, 
                                         [=](cl::sycl::nd_item<1> idx) {
         const int world_rank = idx.get_global_id(0);
-        const int work_size = idx.get_global_range()[0];
+        const int work_size = idx.get_global_range(0);
         const int local_rank = idx.get_local_id(0);
-        const int local_size = idx.get_local_range()[0];
+        const int local_size = idx.get_local_range(0);
         const int group_rank = idx.get_group(0);
-        const int group_size = idx.get_group_range()[0]; 
+        const int group_size = idx.get_group_range(0); 
   
        printf("Hello world: World rank/size: %d / %d. Local rank/size: %d / %d  Group rank/size: %d / %d \n", world_rank, work_size, local_rank, local_size, group_rank, group_size);
         
