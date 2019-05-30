@@ -1,7 +1,8 @@
 #include <CL/sycl.hpp>
 
-// Inspired by Codeplay compute cpp hello-world
 int main(int argc, char** argv) {
+  const auto global_range =  (size_t) atoi(argv[1]);
+
   // Selectors determine which device kernels will be dispatched to.
   cl::sycl::default_selector selector; 
   // Create your own or use `{cpu,gpu,accelerator}_selector`
@@ -11,16 +12,15 @@ int main(int argc, char** argv) {
   std::cout << "Running on "
             << myQueue.get_device().get_info<cl::sycl::info::device::name>()
             << "\n";
-
+//  _                             _       
+// |_) _. ._ ._ _. | | |  _  |   |_ _  ._ 
+// |  (_| |  | (_| | | | (/_ |   | (_) |                                          
+                        
   //Create a command_group to issue command to the group
   myQueue.submit([&](cl::sycl::handler& cgh) {
 
-    /* - - - -
-    Range
-    - - - - */
-    // Range configuration...
-    const auto global_range =  (size_t) atoi(argv[1]);
-    // Nd range allow use to access information
+    // #pragma omp parallel for
+    // for(int idx[0]=0; idx[0]++; idx[0]< global_range)
     cgh.parallel_for<class hello_world>(cl::sycl::range<1>(global_range), 
                                         [=](cl::sycl::id<1> idx) {
        printf("Hello world: World rank %zu \n", idx[0]);
