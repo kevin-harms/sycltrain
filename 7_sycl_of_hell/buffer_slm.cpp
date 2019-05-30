@@ -30,7 +30,7 @@ int main(int argc, char** argv) {
       const int world_rank = idx.get_global_id(0);
       slm[world_rank] = world_rank;
       //So compiler doesn't optimize away
-      printf( "%d \n", slm[world_rank % 1000000]);
+      printf( "slm rank: %d \n", slm[world_rank % INT_MAX ]);
     }); // End of the kernel function
   }); // End of the queue commands
   }  // End of scope, wait for the queued work to stop. 
