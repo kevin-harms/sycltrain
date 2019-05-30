@@ -258,8 +258,172 @@ file.cpp:40:28: error: non-const lvalue reference to type
 
 ---
 # Buffer Management
+- SYCL provides host managed memory in the form of buffer or image
+- private memory local to a workitem can be allocated inside of parallel_for or parallel_for_work_item or cl::sycl::local_accessor
+- memory local to a workgroup can be allocated inside of parllel_for_work_group
+- cl::sycl::buffer
+    - manages copying data back and forth between host and device
+    - can be constructed with cl_mem object, host data, or allow SYCL to allocate
+    - use accessors to get access to data (next topic)
+- explicit copying is possible via *copy* interface provided by the cl::sycl::handler class
+- cl::sycl::image
+    - special instance of buffer the support image concepts such as channel order and image format
+
+##### Examples
+    !c++
+    // user provides explicit memory to use
+    double *data = malloc(sizeof(double) * 1000);
+    cl::sycl::buffer<double, 1> buf1(data, cl::sycl::range<1>(1000));
+    data[0] = 1.0;
+
+    // SYCL handles memory allocation and deallocation
+    cl::sycl::buffer<double, 1> buf2(cl::sycl::range<1>(1000));
+
+    // local memory
+    queue.submit([&](cl::sycl::handler h)
+        {
+            cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> acc = cl::sycl::accessor<int, 1,  cl::sycl::access::mode::read_write, cl::sycl::access::target::local>(cl::sycl::range<1>(SIZE), h);
+            h.parallel_for_work_group([=](id<1> idx)
+                {
+                    ... // workgroup code
+                    acc[x] = 6; // write shared local memory
+                    ... // parallel_for_work_item
+                }
+            );
+        }
+    );
 
 ---
 # Accessor
-# Work Groups and Work Items
-# Code Examples
+- accessors are used to access memory from buffers, images or local memory
+- inform runtime of your intent to access data and allows runtime to schedule access
+- synchronize access to data
+- five components
+    - data type (int, float, etc.)
+    - dimensions (1, 2, 3)
+    - access mode (read, write, read_write, discard_write, discard_read_write, atomic)
+    - target (type of memory: global_buffer, constant_buffer, local, host_buffer)
+    - placeholder (defaults to false)
+
+##### Examples
+    !c++
+    cl::sycl::buffer<double, 1> buf2(cl::sycl::range<1>(1000));
+
+    cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::host_buffer> b_acc = buf2.get_access<cl::sycl::access::mode::read_write>();
+
+    queue.submit([&](cl::sycl::handler &h)
+        {
+            cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::global_buffer> b_acc = buf2.get_access<cl::sycl::access::mode::read_write>(h);
+            ... // kernel code
+        }
+    );
+
+    // use b_acc on host side to allow runtime to synch access
+    double v = b_acc[5];
+
+# Presenter Notes
+- accessors are key topic for correctly accessing data
+- discard variants will not copy data first
+- basis for generating dependency graphs
+
+# Kernels
+- Three core types of Kernels
+    - single_task - run one instance of the kernel, no local accessors
+    - parallel_for - run number of instances based on workgroups and workitems
+        - number of variants for different types of arguments
+    - parallel_for_work_group - allows similar capability as with nd_range
+        - can run work_group code that runs only once for the workgroup
+        - can allocate local memory and private memories
+        - use parallel_for_work_item within to parallelize over work items
+
+##### Examples
+    !c++
+    q.submit([&](cl::sycl::handler &h)
+        {
+            h.single_task([=]() // no arguments
+                {
+                    // do stuff
+                }
+            );
+        }
+    );
+
+# Presenter Notes
+- single_task used for debugging or potentially data movement
+
+---
+# Range Operators
+- SYCL provides seven classes to handle expressing data decomposition
+    - range, nd_range
+    - id, item, nd_item
+    - group, h_item
+- range<dimensions>(<size of dimension>)
+    - range<1>(200)
+    - range<2>(4, 2)
+- id<dimensions> - provides the index into the range
+    - id<1> a; size_t index = a[0];
+    - id<2> b; size_t x = b[0]; int y = b[1];
+- nd_range<dimensions>(range<dimension> global_size, range<dimension> local_size)
+    - nd_range<1>(range<1>(64), range<1>(128))
+- nd_item<dimensions> - provides index into the nd_range plus more functionality
+    - nd_item<1> a; int global_index = a.get_global_id(); int local_index = a.get_local_id();
+
+##### Example
+    !c++
+    q.submit([&](cl::sycl::handler &h)
+        {
+            auto acc = buf.get_access<cl::sycl::access::mode::discard_write>(h);
+            h.parellel_for<class kernel>(cl::sycl::range<1>(4096),
+                [=](cl::sycl::id<1> x)
+                {
+                    size_t i = x[0];
+                    acc[i] = i;
+                }
+            );
+        }
+    );
+# Presenter Notes
+- start with range and id
+- experiment with nd_range and nd_item when you want to control decomposition
+- nd_item has memory barriers and copying functions
+
+---
+# nd_range Example
+    !c++
+    cl::sycl:buffer<int, 1> buf(cl::sycl::range<1>(4096));
+    q.submit([&](cl::sycl::handler &h)
+        {
+            auto acc = buf.get_access<cl::sycl::access::mode::discard_write>(h);
+            h.parellel_for<class kernel>(cl::sycl::nd_range<1>(cl::sycl::range<1>(64), cl::sycl::range<1>(64))
+                [=](cl::sycl::nd_item<1> ndi)
+                {
+                    size_t gi = ndi.get_global_id();
+                    size_t li = ndi.get_local_id();
+                    // size_t i = gi * ndi.get_global_range(1) + li;
+                    size_t i = ndi.get_global_linear_id();
+                    acc[i] = i;
+                }
+            );
+        }
+    );
+
+# Presenter Notes
+- replace range with nd_range and id with nd_item
+- compute index into memory using global and local indicies or
+- use get_global_linear_id()
+
+---
+# References
+- SYCL Specification - [https://www.khronos.org/registry/SYCL/specs/sycl-1.2.1.pdf](https://www.khronos.org/registry/SYCL/specs/sycl-1.2.1.pdf)
+- SYCL Reference Sheet - [https://www.khronos.org/files/sycl/sycl-121-reference-card.pdf](https://www.khronos.org/files/sycl/sycl-121-reference-card.pdf)
+- Codeplay examples - [https://github.com/codeplaysoftware/computecpp-sdk/tree/master/samples](https://github.com/codeplaysoftware/computecpp-sdk/tree/master/samples)
+
+# Presenter Notes
+- specification is useful, difficult to search due to differences in typographic symbols
+    - underscore
+---
+# Summary
+- SYCL just like OpenCL
+    - if you like OpenCL, you will like SYCL, if not, look elsewhere
+- SYCL leverages C++ syntax heavily
+    - much of the verbosity and ugliness come from C++ rather than something SYCL specific
