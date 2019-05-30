@@ -2,6 +2,9 @@
 
 // Inspired by Codeplay compute cpp hello-world
 int main(int argc, char** argv) {
+  const auto global_range =  (size_t) atoi(argv[1]);
+  const auto local_range =  (size_t) atoi(argv[2]);
+  
   // Selectors determine which device kernels will be dispatched to.
   cl::sycl::default_selector selector; 
   // Create your own or use `{cpu,gpu,accelerator}_selector`
@@ -14,15 +17,12 @@ int main(int argc, char** argv) {
 
   //Create a command_group to issue command to the group
   myQueue.submit([&](cl::sycl::handler& cgh) {
+                                 
+// ._   _|        ._ _. ._   _   _  
+// | | (_|        | (_| | | (_| (/_ 
+//           __              _|     
 
-    /* - - - -
-    ND range
-    - - - - */
-    // NDrange configuration...
-    const auto global_range =  (size_t) atoi(argv[1]);
-    const auto local_range =  (size_t) atoi(argv[2]);
-
-    // Nd range allow use to access information
+    // nd_range, geneate a nd_item who allow use to query loop dispach information
     cgh.parallel_for<class hello_world>(cl::sycl::nd_range<1>{cl::sycl::range<1>(global_range), 
                                                              cl::sycl::range<1>(local_range) }, 
                                         [=](cl::sycl::nd_item<1> idx) {
