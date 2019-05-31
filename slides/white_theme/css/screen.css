@@ -1,4 +1,10 @@
 /***************************************************************************/
+
+:root {
+    --screen-width: 1920px;
+    --screen-height: 1080px;
+}
+
 /* The bits that you probably want to override! */
 body {
     font-size: 36px;
@@ -22,7 +28,7 @@ pre {
 }
 
 li {
-  padding: 10px 0;
+  padding: 5px 0;
 }
 
 table {
@@ -63,7 +69,7 @@ aside.source, aside.page_number {
 }
 
 /* Quote and blockquote */
-blockquote          { text-indent: -1ex; margin-bottom: 10px;}
+blockquote          { text-indent: -1ex; margin-bottom: 0px; font-size: 24px }
 blockquote *        { quotes: none; }
 blockquote p:before { content: '\201C'; }
 blockquote p:after  { content: '\201D'; }
@@ -105,12 +111,12 @@ div.titleslide { text-align: center; }
 div.titleslide h1 { padding-top: 140px; font-size: 80px; font-weight: bold;}
 
 /* imageslide: covering a whole slide with an image */
-div.slides div.imageslide {margin: 0; width: 2560px; height: 1440px;}
+div.slides div.imageslide {margin: 0; width: var(--screen-width); height: var(--screen-height);}
 div.imageslide img {
   position: absolute;
   top: 0; left: 0;
-  width: 2560px;
-  max-width: 2560px; max-height: 1440px;
+  width: var(--screen-width);
+  max-width: var(--screen-width); max-height: var(--screen-height);
   z-index: 0;
 }
 
@@ -155,25 +161,25 @@ body {
 
 div.presentation {
   margin     : 0px auto;
-  width      : 2560px;
-  height     : 1440px;
+  width      : var(--screen-width);
+  height     : var(--screen-height);
   position   : absolute;
   top        : 50%;
   left       : 50%;
-  margin-left: -1280px;
-  margin-top : -720px;
+  margin-left: -1000px;
+  margin-top : -500px;
 }
 
 div.slides {
-  width      : 2560px;
-  height     : 1440px;
+  width      : var(--screen-width);
+  height     : var(--screen-height);
 }
 
 div.slide {
   margin-left: 80px; /* Nice big margin */
   margin-top : 40px;
-  width      : 2400px;
-  height     : 1360px;
+  width      : calc(var(--screen-width)-80px);
+  height     : calc(var(--screen-height)-40px);
   position   : absolute;
   overflow   : hidden;
   z-index: 0;
@@ -186,8 +192,8 @@ div.slide {
 }
 
 .slide header:only-child h1 {
-  height        : 2400px;
-  width         : 1360px;
+  height        : calc(var(--screen-width)-80px);
+  width         : calc(var(--screen-height)-80px);
   text-align    : center;
   display       : table-cell;
   vertical-align: middle;
@@ -198,7 +204,7 @@ ol {
 }
 
 /* Image alignment options. Note that we align centre by default */
-img { display: block; margin: auto; max-width: 2400px; max-height: 1300px;}
+img { display: block; margin: auto; max-width: calc(var(--screen-width) * 0.9); max-height: calc(var(--screen-height) * 0.9);}
 
 section img.align-center, section img.align-centre, section img.center, section img.centre {
   display: block;
@@ -257,8 +263,8 @@ body.presenter_view #blank {
   padding   : 30px;
   color: white;
   position:absolute;
-  width     : 710px;
-  min-height: 300px;
+  width     : calc(var(--screen-width) * 0.5);
+  min-height: calc(var(--screen-width) * 0.5);
   left: 51px;
   top: 123px;
   overflow  : hidden;
@@ -286,15 +292,15 @@ body.expose div.slides {
   position        : relative;
   overflow        : auto;
   margin          : 10px;
-  width           : 2560px;
-  height          : 1440px;
+  width           : var(--screen-width);
+  height          : var(--screen-height);
   background-color: #fff !important;
 }
 
 body.expose div.slide {
   display                 : block;
-  width                   : 2400px;
-  height                  : 1360px;
+  width                   : var(--screen-width);
+  height                  : var(--screen-height);
   float                   : left;
   position                : relative;
   left                    : auto !important;
@@ -473,8 +479,8 @@ body.presenter_view div.slide {
   -o-transform: scale(0.55, 0.55);
   -o-transform-origin: 0 0;
   opacity: 1;
-  width: 2400px !important;
-  height: 1360px !important;
+  width: var(--screen-width) !important;
+  height: var(--screen-height) !important;
   margin-left: 60px !important;
   margin-top: 90px !important;
 }
@@ -510,7 +516,7 @@ body.presenter_view .slide.future {
 
 body.presenter_view .slide.far-future {
   display: none;
-  margin-left: 525px;
+  margin-left: calc(var(--screen-width) * 0.1);
 }
 
 body.presenter_view div#current_presenter_notes {
