@@ -1,6 +1,6 @@
 # How to compile
+
 ```
-export MODULEPATH=/soft/restricted/intel_dga/modulefiles_sdk
 module load dpcpp
 make -j 8 
 ```
