@@ -1,8 +1,7 @@
 # How to compile
 
 ```
-module load dpcpp
-make -j 8 
+make -j 7
 ```
 
 # List of program
