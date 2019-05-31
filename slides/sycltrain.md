@@ -1,10 +1,8 @@
 # SYCL Workshop
 ## May 31, 2019
 
+Thomas Applencourt
 
-
-Thomas Applencourt  
-Paulius Velesko  
 Kevin Harms  
 
 ---
@@ -16,8 +14,6 @@ Kevin Harms
 * Buffer Management
 * Device Selection
 * Code Examples
-* VTune Usage
-* CUDA to SYCL Translation
 
 ---
 
@@ -141,20 +137,15 @@ file.cpp:40:28: error: non-const lvalue reference to type
 ---
 # SYCL Overview
 - C++ Specification based on the OpenCL runtime
-
 > ... royalty-free, cross-platform abstraction layer that builds on the underlying concepts, portability and efficiency of OpenCL that enables code for heterogeneous processors to be written in a “single-source” style using completely standard C++. SYCL single-source programming enables the host and kernel code for an application to be contained in the same source file, in a type-safe way and with the simplicity of a cross-platform asynchronous task graph. SYCL includes templates and generic lambda functions to enable higher-level application software to be cleanly coded with optimized acceleration of kernel code across the extensive range of shipping OpenCL 1.2 implementations.
 
 - based on standard C++11
 - Most concepts taken directly from OpenCL
-    - platform, device, queue, buffer, NDRange (range)
-    - work groups and work items    
+    - platform, device, queue, buffer, NDRange (range), work groups and work items    
 - build and create kernel aspects of OpenCL now handled implicitly in SYCL
     - done at compile time
 - memory model is the same as OpenCL 1.2
-- [https://www.khronos.org/sycl/](https://www.khronos.org/sycl/)
-
-![SYCL](https://www.khronos.org/assets/uploads/ceimg/made/assets/uploads/apis/SYCL_100px_June16_165_75.png)
-
+- [https://www.khronos.org/sycl/](https://www.khronos.org/sycl/) ![SYCL](https://www.khronos.org/assets/uploads/ceimg/made/assets/uploads/apis/SYCL_100px_June16_165_75.png)
 ---
 # SYCL Code Overview
     !c++
@@ -165,11 +156,12 @@ file.cpp:40:28: error: non-const lvalue reference to type
     queue.submit([&](cl::sycl::handler handler) // run a kernel on the GPU, lambda, capture by reference
         {
             // **code run on host**
-            cl::sycl::accessor<float, 1, cl::sycl::access::mode::read> input_data_acc = input_data.get_access<cl::sycl::access::mode::read>(handler);
+            cl::sycl::accessor<float, 1, cl::sycl::access::mode::read> input_data_acc = \
+                input_data.get_access<cl::sycl::access::mode::read>(handler);
 
             handler.parallel_for<class kernel>(cl::sycl::range<1>(1024),
                 // **offloaded code**
-                [=](cl::sycl::id<1> id) // lambda, capture by value
+                [=](cl::sycl::id<1> idx) // lambda, capture by value
                 {
                     float v;
                     int   i;
@@ -190,7 +182,7 @@ file.cpp:40:28: error: non-const lvalue reference to type
 
 ---
 # Comparison to OpenCL Structure
-![yasi-opencl-structure-1](yasi-opencl-structure-1.pdf)
+![yasi-opencl-structure-1](yasi-opencl-structure-1.png)
 
 # Presenter Notes
 - Same chart from Yasaman's OpenCL presentation on OpenCL program structure
@@ -198,7 +190,7 @@ file.cpp:40:28: error: non-const lvalue reference to type
 
 ---
 # Comparison to OpenCL Structure
-![yasi-opencl-structure-1](yasi-opencl-structure-2.pdf)
+![yasi-opencl-structure-1](yasi-opencl-structure-2.png)
 
 # Presenter Notes
 - This is how the structure maps to SYCL
@@ -219,14 +211,18 @@ file.cpp:40:28: error: non-const lvalue reference to type
 - cl::sycl::accelerator_selector
     - selects an accelerator device
     - communicate with the host processor using a peripheral interconnect such as PCIe.
-##### Example
-    !c++
-    cl::sycl::queue queue(cl::sycl::gpu_selector());
 
 # Presenter Notes
 - SYCL/OpenCL specification doesn't have clear definitions of what a device is
 - can write a custom device selector to apply logic to select device
-- A device can only have one type, possibly device could be represented as multiple platforms or devices
+- A device can only have one type
+
+---
+# Device Selection Example
+##### Example
+    !c++
+    cl::sycl::device_selector &device = cl::sycl::gpu_selector();
+    cl::sycl::queue queue(&device);
 
 ---
 # Queue Management
@@ -240,10 +236,18 @@ file.cpp:40:28: error: non-const lvalue reference to type
     - *wait_and_throw* or *throw_asynchronous* must be called to run the handler
 - queue object destructors will wait for queued kernels to complete before the destructor completes
 
+# Presenter Notes
+- a common asynch error is the workgroup size not being decomposable
+
+---
+# Queue Management Example
 ##### Example
     !c++
-    cl::sycl::async_handler ah = [](cl::sycl::exception_list elist) { for( auto &e : elist); { std::cout << e.what() << std::endl; } };
+    cl::sycl::async_handler ah = \
+        [](cl::sycl::exception_list elist) { for( auto &e : elist); { std::cout << e.what() << std::endl; } };
+
     cl::sycl::queue q(cl::sycl::default_selector(), ah);
+
     try {
         q.submit(...); // async error example would be workgroup size that can not be integer split
         q.wait_and_throw(); // and_throw required to catch asynch exceptions, wait will discard them
@@ -253,14 +257,14 @@ file.cpp:40:28: error: non-const lvalue reference to type
         std::cout << e.what() << std::endl;
     }
 
-# Presenter Notes
-- a common asynch error is the workgroup size not being decomposable
-
 ---
 # Buffer Management
 - SYCL provides host managed memory in the form of buffer or image
-- private memory local to a workitem can be allocated inside of parallel_for or parallel_for_work_item or cl::sycl::local_accessor
-- memory local to a workgroup can be allocated inside of parllel_for_work_group
+- private memory local to a *workitem* can be allocated inside of
+    - parallel_for or parallel_for_work_item
+- memory local to a *workgroup* can be allocated inside of
+    - parllel_for_work_group
+    - accessor using or cl::sycl::local_accessor
 - cl::sycl::buffer
     - manages copying data back and forth between host and device
     - can be constructed with cl_mem object, host data, or allow SYCL to allocate
@@ -269,10 +273,11 @@ file.cpp:40:28: error: non-const lvalue reference to type
 - cl::sycl::image
     - special instance of buffer the support image concepts such as channel order and image format
 
-##### Examples
+---
+# Buffer Management Example
     !c++
     // user provides explicit memory to use
-    double *data = malloc(sizeof(double) * 1000);
+    double *data = malloc(sizeof(double) * 1000); //*
     cl::sycl::buffer<double, 1> buf1(data, cl::sycl::range<1>(1000));
     data[0] = 1.0;
 
@@ -280,9 +285,11 @@ file.cpp:40:28: error: non-const lvalue reference to type
     cl::sycl::buffer<double, 1> buf2(cl::sycl::range<1>(1000));
 
     // local memory
-    queue.submit([&](cl::sycl::handler h)
+    queue.submit([&](cl::sycl::handler &h)
         {
-            cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> acc = cl::sycl::accessor<int, 1,  cl::sycl::access::mode::read_write, cl::sycl::access::target::local>(cl::sycl::range<1>(SIZE), h);
+            cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> acc = \
+                cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, \
+                        cl::sycl::access::target::local>(cl::sycl::range<1>(SIZE), h);
             h.parallel_for_work_group([=](id<1> idx)
                 {
                     ... // workgroup code
@@ -305,27 +312,30 @@ file.cpp:40:28: error: non-const lvalue reference to type
     - target (type of memory: global_buffer, constant_buffer, local, host_buffer)
     - placeholder (defaults to false)
 
-##### Examples
+# Presenter Notes
+    - accessors are key topic for correctly accessing data
+    - discard variants will not copy data first
+    - basis for generating dependency graphs
+---
+# Accessor Example
     !c++
     cl::sycl::buffer<double, 1> buf2(cl::sycl::range<1>(1000));
 
-    cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::host_buffer> b_acc = buf2.get_access<cl::sycl::access::mode::read_write>();
+    cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::host_buffer> b_acc = \
+        buf2.get_access<cl::sycl::access::mode::read_write>();
 
     queue.submit([&](cl::sycl::handler &h)
         {
-            cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::global_buffer> b_acc = buf2.get_access<cl::sycl::access::mode::read_write>(h);
-            ... // kernel code
+        cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::global_buffer> b_acc = \
+            buf2.get_access<cl::sycl::access::mode::read_write>(h);
+        ... // kernel code
         }
     );
 
     // use b_acc on host side to allow runtime to synch access
     double v = b_acc[5];
 
-# Presenter Notes
-- accessors are key topic for correctly accessing data
-- discard variants will not copy data first
-- basis for generating dependency graphs
-
+---
 # Kernels
 - Three core types of Kernels
     - single_task - run one instance of the kernel, no local accessors
@@ -335,18 +345,15 @@ file.cpp:40:28: error: non-const lvalue reference to type
         - can run work_group code that runs only once for the workgroup
         - can allocate local memory and private memories
         - use parallel_for_work_item within to parallelize over work items
-
-##### Examples
+##### Example
     !c++
     q.submit([&](cl::sycl::handler &h)
         {
             h.single_task([=]() // no arguments
                 {
                     // do stuff
-                }
-            );
-        }
-    );
+                });
+        });
 
 # Presenter Notes
 - single_task used for debugging or potentially data movement
@@ -357,18 +364,25 @@ file.cpp:40:28: error: non-const lvalue reference to type
     - range, nd_range
     - id, item, nd_item
     - group, h_item
-- range<dimensions>(<size of dimension>)
+- `range<dimensions>(<size of dimension>)`
     - range<1>(200)
     - range<2>(4, 2)
-- id<dimensions> - provides the index into the range
+- `id<dimensions>` - provides the index into the range
     - id<1> a; size_t index = a[0];
     - id<2> b; size_t x = b[0]; int y = b[1];
-- nd_range<dimensions>(range<dimension> global_size, range<dimension> local_size)
+- `nd_range<dimensions>(range<dimension> global_size, range<dimension> local_size)`
     - nd_range<1>(range<1>(64), range<1>(128))
-- nd_item<dimensions> - provides index into the nd_range plus more functionality
+- `nd_item<dimensions>` - provides index into the nd_range plus more functionality
     - nd_item<1> a; int global_index = a.get_global_id(); int local_index = a.get_local_id();
 
-##### Example
+# Presenter Notes
+    - start with range and id
+    - experiment with nd_range and nd_item when you want to control decomposition
+    - nd_item has memory barriers and copying functions
+
+---
+# range Example
+
     !c++
     q.submit([&](cl::sycl::handler &h)
         {
@@ -382,10 +396,6 @@ file.cpp:40:28: error: non-const lvalue reference to type
             );
         }
     );
-# Presenter Notes
-- start with range and id
-- experiment with nd_range and nd_item when you want to control decomposition
-- nd_item has memory barriers and copying functions
 
 ---
 # nd_range Example
@@ -394,7 +404,8 @@ file.cpp:40:28: error: non-const lvalue reference to type
     q.submit([&](cl::sycl::handler &h)
         {
             auto acc = buf.get_access<cl::sycl::access::mode::discard_write>(h);
-            h.parellel_for<class kernel>(cl::sycl::nd_range<1>(cl::sycl::range<1>(64), cl::sycl::range<1>(64))
+            h.parellel_for<class kernel>(cl::sycl::nd_range<1>(cl::sycl::range<1>(64),
+                                                                cl::sycl::range<1>(64))
                 [=](cl::sycl::nd_item<1> ndi)
                 {
                     size_t gi = ndi.get_global_id();
@@ -417,6 +428,8 @@ file.cpp:40:28: error: non-const lvalue reference to type
 - SYCL Specification - [https://www.khronos.org/registry/SYCL/specs/sycl-1.2.1.pdf](https://www.khronos.org/registry/SYCL/specs/sycl-1.2.1.pdf)
 - SYCL Reference Sheet - [https://www.khronos.org/files/sycl/sycl-121-reference-card.pdf](https://www.khronos.org/files/sycl/sycl-121-reference-card.pdf)
 - Codeplay examples - [https://github.com/codeplaysoftware/computecpp-sdk/tree/master/samples](https://github.com/codeplaysoftware/computecpp-sdk/tree/master/samples)
+- Parallel Research Kernels - [https://github.com/ParRes/Kernels](https://github.com/ParRes/Kernels)
+    - under Cxx11 directory
 
 # Presenter Notes
 - specification is useful, difficult to search due to differences in typographic symbols
@@ -426,4 +439,4 @@ file.cpp:40:28: error: non-const lvalue reference to type
 - SYCL just like OpenCL
     - if you like OpenCL, you will like SYCL, if not, look elsewhere
 - SYCL leverages C++ syntax heavily
-    - much of the verbosity and ugliness come from C++ rather than something SYCL specific
+    - much of the verbosity and ugliness comes from C++ rather than something SYCL specific
