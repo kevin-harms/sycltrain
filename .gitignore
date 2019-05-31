@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+# slide artefacts
+slides/*.pdf
+slides/*.html
