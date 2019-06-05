@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
      auto accessorA = bufferA.get_access<cl::sycl::access::mode::discard_write>(cgh);
     // Nd range allow use to access information
     cgh.parallel_for<class hello_world>(cl::sycl::nd_range<1>{cl::sycl::range<1>(global_range), 
-                                                             cl::sycl::range<1>(local_range) }, 
+                                                              cl::sycl::range<1>(local_range) }, 
                                         [=](cl::sycl::nd_item<1> idx) {
       const int world_rank = idx.get_global_id(0);
       accessorA[world_rank] = world_rank;
