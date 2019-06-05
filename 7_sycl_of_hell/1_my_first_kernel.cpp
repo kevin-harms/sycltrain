@@ -22,9 +22,7 @@ int main() {
         printf("Hello, World!\n");
     }); // End of the kernel function
   }); // End of the queue commands 
-  printf("Before or After HW \n");
   }  // End of scope, wait for the queued work to stop. 
      // Can also use  myQueue.wait_and_throw();
-  printf("For sure adter the Hello, World\n");
   return 0;
 }
