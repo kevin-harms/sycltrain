@@ -27,6 +27,5 @@ int main()
                     std::cout << ( dev.is_gpu() ? "is a gpu" : " is not a gpu" ) << std::endl;
                    // cl::sycl::info::device::device_type exist, but do not overloead the << operator
         }
-
    }
 } 

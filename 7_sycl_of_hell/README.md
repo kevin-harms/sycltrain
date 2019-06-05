@@ -13,3 +13,4 @@ make -j 7
 - `buffer.cpp`  How to data-transfer (`./4_buffer 8 1`)
 - `buffer_slm.cpp`  How to *not* data-transfer (`./5_buffer_slm 8 1`)
 - `order.cpp`     How to handle dependences (`./6_order 8 0`)
+- `kernel_instances.cpp` How to call a kernel more than once (`./7_kernel_instances 2 1`)

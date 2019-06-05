@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     // for(int idx[0]=0; idx[0]++; idx[0]< global_range)
     cgh.parallel_for<class hello_world>(cl::sycl::range<1>(global_range), 
                                         [=](cl::sycl::id<1> idx) {
-       printf("Hello world: World rank %zu \n", idx[0]);
+       printf("Hello world: World rank %zu \n", idx.get_id(0));
 
     }); // End of the kernel function
   }); // End of the queue commands 

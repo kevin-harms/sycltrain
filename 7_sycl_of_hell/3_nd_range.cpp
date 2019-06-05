@@ -6,7 +6,7 @@ int main(int argc, char** argv) {
   const auto local_range =  (size_t) atoi(argv[2]);
   
   // Selectors determine which device kernels will be dispatched to.
-  cl::sycl::default_selector selector; 
+  cl::sycl::cpu_selector selector; 
   // Create your own or use `{cpu,gpu,accelerator}_selector`
   {
   

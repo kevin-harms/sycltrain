@@ -3,7 +3,7 @@
 // Inspired by Codeplay compute cpp hello-world
 int main() {
   // Selectors determine which device kernels will be dispatched to.
-  cl::sycl::default_selector selector; 
+  cl::sycl::gpu_selector selector; 
   // Create your own or use `{cpu,gpu,accelerator}_selector`
   {
   
@@ -22,7 +22,9 @@ int main() {
         printf("Hello, World!\n");
     }); // End of the kernel function
   }); // End of the queue commands 
+  printf("Before or After HW \n");
   }  // End of scope, wait for the queued work to stop. 
      // Can also use  myQueue.wait_and_throw();
+  printf("For sure adter the Hello, World\n");
   return 0;
 }

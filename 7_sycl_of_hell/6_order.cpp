@@ -4,7 +4,6 @@
 int main(int argc, char** argv) {
 
    const auto global_range =  (size_t) atoi(argv[1]);
-
    const auto in_order =  (bool) atoi(argv[2]);
 
 
