@@ -3,7 +3,7 @@
 // Inspired by Codeplay compute cpp hello-world
 int main() {
   // Selectors determine which device kernels will be dispatched to.
-  cl::sycl::gpu_selector selector; 
+  cl::sycl::default_selector selector; 
   // Create your own or use `{cpu,gpu,accelerator}_selector`
   {
   
