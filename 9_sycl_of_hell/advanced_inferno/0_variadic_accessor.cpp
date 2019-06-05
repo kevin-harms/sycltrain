@@ -18,9 +18,6 @@ void f_discard_write(cl::sycl::handler& cgh, int global_range, cl::sycl::buffer<
     cgh.parallel_for(cl::sycl::range<1>(global_range), vector_init_kernel(accessorA));
 }
 
-
-using namespace cl::sycl;
-
 int main(int argc, char** argv) {
 
   const auto global_range =  (size_t) atoi(argv[1]);
@@ -46,6 +43,8 @@ int main(int argc, char** argv) {
                             std::placeholders::_1, global_range, bufferA));
   }  // End of scope, wait for the queued work to stop.
  
+ for (size_t i = 0; i < global_range; i++)
+        std::cout<< "A[ " << i <<" ] = " << A[i] << std::endl;
   return 0;
 }
 
