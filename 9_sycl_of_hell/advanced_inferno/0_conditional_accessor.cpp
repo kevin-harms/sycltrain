@@ -9,7 +9,7 @@ class vector_init_kernel{
 };
 
 void f_write(cl::sycl::handler& cgh, int global_range, cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA) {
-     std::cout << "Using write accessor" << std::endl;
+    std::cout << "Using write accessor" << std::endl;
     auto accessorA = bufferA.get_access<cl::sycl::access::mode::write>(cgh);
     cgh.parallel_for(cl::sycl::range<1>(global_range), vector_init_kernel(accessorA));
 }
@@ -22,8 +22,8 @@ void f_discard_write(cl::sycl::handler& cgh, int global_range, cl::sycl::buffer<
 
 int main(int argc, char** argv) {
 
-  const auto global_range =  (size_t) atoi(argv[1]);
-  const auto write = (bool) atoi(argv[2]);
+   const auto global_range =  (size_t) atoi(argv[1]);
+   const auto write = (bool) atoi(argv[2]);
 
    // Crrate array
    int A[global_range];
