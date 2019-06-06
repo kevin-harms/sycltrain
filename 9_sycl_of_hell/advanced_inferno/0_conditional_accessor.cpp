@@ -27,7 +27,7 @@ int main(int argc, char** argv) {
    int A[global_range];
 
   // Selectors determine which device kernels will be dispatched to.
-  cl::sycl::gpu_selector selector;
+  cl::sycl::default_selector selector;
   // Create your own or use `{cpu,gpu,accelerator}_selector`
   {
   cl::sycl::queue myQueue(selector);
