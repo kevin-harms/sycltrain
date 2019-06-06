@@ -9,11 +9,13 @@ class vector_init_kernel{
 };
 
 void f_write(cl::sycl::handler& cgh, int global_range, cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA) {
+     std::cout << "Using write accessor" << std::endl;
     auto accessorA = bufferA.get_access<cl::sycl::access::mode::write>(cgh);
     cgh.parallel_for(cl::sycl::range<1>(global_range), vector_init_kernel(accessorA));
 }
 
 void f_discard_write(cl::sycl::handler& cgh, int global_range, cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA) {
+    std::cout << "Using discard_write accessor" << std::endl;
     auto accessorA = bufferA.get_access<cl::sycl::access::mode::discard_write>(cgh);
     cgh.parallel_for(cl::sycl::range<1>(global_range), vector_init_kernel(accessorA));
 }
