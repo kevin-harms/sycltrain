@@ -1,3 +1,4 @@
+#include <iostream>
 #include <CL/sycl.hpp>
 template <typename dataT>
 class vector_init_kernel{

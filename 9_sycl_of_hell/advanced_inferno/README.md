@@ -13,3 +13,4 @@ make -j 7
 # List of program
 
 - `variadic_accessor` Same kernel, different accesors ( `./0_variadic_accessor 10 0`)
+- `simple_dag` Dag A.host -> A.device -> B.device -> C.device -> A.host (`./1_simple_dag.cpp 10`)
