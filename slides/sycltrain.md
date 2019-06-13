@@ -11,9 +11,15 @@ Kevin Harms
 
 * C++ Review
 * SYCL Overview
-* Buffer Management
+* Comparison to OpenCL
 * Device Selection
-* Code Examples
+* Queue Management
+* Buffer Management
+* Accessors
+* Kernels
+* Range Operators
+* References
+* Summary
 
 ---
 
@@ -33,7 +39,7 @@ Kevin Harms
 # Presenter Notes
 - SYCL uses many C++ features, we need to review these to help understand the code
 - point out generic type in example
-- reason for code bload and slow compile times
+- reason for code bloat and slow compile times
 
 ---
 # C++ Review - Template functions and typename
@@ -58,7 +64,7 @@ Kevin Harms
 
 ---
 # C++ Review - lambda
-- Lambda[^1] common in many languages, same concept in c++
+- Lambda[^1] is common in many languages, same concept in c++
 - creates an anonymous function that can capture variables in scope
 
 *[capture] (parameters) { body };*  
@@ -90,7 +96,7 @@ Kevin Harms
         q.submit([&](cl::sycl::handler &h) {
                 auto buf_acc = buf.get_access<cl::sycl::access::read>(h);
                 int y = x;
-                h.single_task<class kernel>(cl::sycl::range<1>(100),
+                h.parallel_for<class kernel>(cl::sycl::range<1>(100),
                     [=](cl::sycl::id<1> idx)
                     {
                         int i = idx[0];
@@ -101,15 +107,16 @@ Kevin Harms
         q.wait();
     }
 # Presenter Notes
-- lambda passed to submit() is by reference, what value is y?
+- lambda passed to submit() is by reference
 - sycl 4.8.2 indicates host code in submit should run before submit returns
+  - y should be 5
 
 ---
 # C++ Review - auto
 - The *auto* keyword replaces the type and allows the compiler to determine the type from the initializer
 - C/C++ is strongly typed, it's important to know types
 - Templated code makes for ugly types
-- *Never* use auto, leads to unreadable code
+- *Avoid* using auto, leads to code that may be hard to understand later as all types are obfuscated
 
 ##### Example type
     !c++
@@ -150,10 +157,10 @@ file.cpp:40:28: error: non-const lvalue reference to type
 # SYCL Code Overview
     !c++
     float local_data[1024]; // local host memory
-    const cl::sycl::device_selector gpu = cl::sycl::gpu_selector(); // select which device to run on
+    const cl::sycl::device_selector &gpu = cl::sycl::gpu_selector(); // select which device to run on
     cl::sycl::queue queue(gpu); // allocate all the SYCL/OpenCL runtime resources and attach to 'gpu'
     cl::sycl::buffer<float,1> input_data(local_buffer, cl::sycl::range<1>(1024)); // create SYCL managed buffer
-    queue.submit([&](cl::sycl::handler handler) // run a kernel on the GPU, lambda, capture by reference
+    queue.submit([&](cl::sycl::handler &handler) // run a kernel on the GPU, lambda, capture by reference
         {
             // **code run on host**
             cl::sycl::accessor<float, 1, cl::sycl::access::mode::read> input_data_acc = \
@@ -222,7 +229,7 @@ file.cpp:40:28: error: non-const lvalue reference to type
 ##### Example
     !c++
     cl::sycl::device_selector &device = cl::sycl::gpu_selector();
-    cl::sycl::queue queue(&device);
+    cl::sycl::queue queue(device);
 
 ---
 # Queue Management
@@ -252,7 +259,11 @@ file.cpp:40:28: error: non-const lvalue reference to type
         q.submit(...); // async error example would be workgroup size that can not be integer split
         q.wait_and_throw(); // and_throw required to catch asynch exceptions, wait will discard them
     }
-    catch (cl::sycl::exception &e)
+    catch (cl::sycl::exception &e) // catch SYCL exceptions
+    {
+        std::cout << e.what() << std::endl;
+    }
+    catch (std::exception &e) // catch other exceptions
     {
         std::cout << e.what() << std::endl;
     }
@@ -264,7 +275,7 @@ file.cpp:40:28: error: non-const lvalue reference to type
     - parallel_for or parallel_for_work_item
 - memory local to a *workgroup* can be allocated inside of
     - parllel_for_work_group
-    - accessor using or cl::sycl::local_accessor
+    - accessor using cl::sycl::local_accessor
 - cl::sycl::buffer
     - manages copying data back and forth between host and device
     - can be constructed with cl_mem object, host data, or allow SYCL to allocate
@@ -278,8 +289,9 @@ file.cpp:40:28: error: non-const lvalue reference to type
     !c++
     // user provides explicit memory to use
     double *data = malloc(sizeof(double) * 1000); //*
-    cl::sycl::buffer<double, 1> buf1(data, cl::sycl::range<1>(1000));
     data[0] = 1.0;
+    // create buffer from existing memory allocation
+    cl::sycl::buffer<double, 1> buf1(data, cl::sycl::range<1>(1000));
 
     // SYCL handles memory allocation and deallocation
     cl::sycl::buffer<double, 1> buf2(cl::sycl::range<1>(1000));
@@ -287,6 +299,7 @@ file.cpp:40:28: error: non-const lvalue reference to type
     // local memory
     queue.submit([&](cl::sycl::handler &h)
         {
+            // Shared Local Memory (SLM) allocation
             cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> acc = \
                 cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, \
                         cl::sycl::access::target::local>(cl::sycl::range<1>(SIZE), h);
@@ -321,9 +334,6 @@ file.cpp:40:28: error: non-const lvalue reference to type
     !c++
     cl::sycl::buffer<double, 1> buf2(cl::sycl::range<1>(1000));
 
-    cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::host_buffer> b_acc = \
-        buf2.get_access<cl::sycl::access::mode::read_write>();
-
     queue.submit([&](cl::sycl::handler &h)
         {
         cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::global_buffer> b_acc = \
@@ -332,8 +342,12 @@ file.cpp:40:28: error: non-const lvalue reference to type
         }
     );
 
-    // use b_acc on host side to allow runtime to synch access
-    double v = b_acc[5];
+    cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::host_buffer> b_host_acc = \
+        buf2.get_access<cl::sycl::access::mode::read_write>();
+
+    // use b_host_acc on host side to allow runtime to synch access
+    // will wait until data is copied back to host
+    double v = b_host_acc[5];
 
 ---
 # Kernels
@@ -342,7 +356,7 @@ file.cpp:40:28: error: non-const lvalue reference to type
     - parallel_for - run number of instances based on workgroups and workitems
         - number of variants for different types of arguments
     - parallel_for_work_group - allows similar capability as with nd_range
-        - can run work_group code that runs only once for the workgroup
+        - can run workgroup code that runs only once for the workgroup
         - can allocate local memory and private memories
         - use parallel_for_work_item within to parallelize over work items
 ##### Example
@@ -369,11 +383,11 @@ file.cpp:40:28: error: non-const lvalue reference to type
     - range<2>(4, 2)
 - `id<dimensions>` - provides the index into the range
     - id<1> a; size_t index = a[0];
-    - id<2> b; size_t x = b[0]; int y = b[1];
+    - id<2> b; size_t x = b[0]; size_t y = b[1];
 - `nd_range<dimensions>(range<dimension> global_size, range<dimension> local_size)`
-    - nd_range<1>(range<1>(64), range<1>(128))
+    - nd_range<1>(range<1>(256), range<1>(128))
 - `nd_item<dimensions>` - provides index into the nd_range plus more functionality
-    - nd_item<1> a; int global_index = a.get_global_id(); int local_index = a.get_local_id();
+    - nd_item<1> a; size_t global_index = a.get_global_id(); size_t local_index = a.get_local_id();
 
 # Presenter Notes
     - start with range and id
@@ -404,13 +418,15 @@ file.cpp:40:28: error: non-const lvalue reference to type
     q.submit([&](cl::sycl::handler &h)
         {
             auto acc = buf.get_access<cl::sycl::access::mode::discard_write>(h);
-            h.parellel_for<class kernel>(cl::sycl::nd_range<1>(cl::sycl::range<1>(64),
+            h.parellel_for<class kernel>(cl::sycl::nd_range<1>(cl::sycl::range<1>(128),
                                                                 cl::sycl::range<1>(64))
                 [=](cl::sycl::nd_item<1> ndi)
                 {
                     size_t gi = ndi.get_global_id();
                     size_t li = ndi.get_local_id();
+                    // compute index manually
                     // size_t i = gi * ndi.get_global_range(1) + li;
+                    // or let SYCL do the work for you
                     size_t i = ndi.get_global_linear_id();
                     acc[i] = i;
                 }
@@ -420,8 +436,8 @@ file.cpp:40:28: error: non-const lvalue reference to type
 
 # Presenter Notes
 - replace range with nd_range and id with nd_item
-- compute index into memory using global and local indicies or
-- use get_global_linear_id()
+- compute index into memory using global and local indices or
+- use get_global_linear_id() to allow SYCL to compute the offset according to formula in documentation
 
 ---
 # References
