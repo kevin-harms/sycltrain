@@ -26,11 +26,6 @@ int main(int argc, char** argv) {
    // Crrate array
    std::vector<int> A(global_range, 0);
 
-  // Create buffer
-  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA(A.data(), global_range);
-  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferB(global_range);
-  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferC(global_range);
-
   // Selectors determine which device kernels will be dispatched to.
   cl::sycl::default_selector selector;
   // Create your own or use `{cpu,gpu,accelerator}_selector`
@@ -42,6 +37,13 @@ int main(int argc, char** argv) {
   //   _      __ 
   //  | \ /\ /__ 
   //  |_//--\\_| 
+ 
+
+  // Create buffer
+  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA(A.data(), global_range);
+  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferB(global_range);
+  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferC(global_range);
+
   myQueue.submit(std::bind(f_copy, std::placeholders::_1, global_range, bufferB, bufferA));
   myQueue.submit(std::bind(f_copy, std::placeholders::_1, global_range, bufferC, bufferB));
   myQueue.submit(std::bind(f_copy, std::placeholders::_1, global_range, bufferA, bufferC));
