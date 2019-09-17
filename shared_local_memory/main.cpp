@@ -2,29 +2,30 @@
 #include <CL/sycl.hpp>
 #include <iostream>
 
-#define SIZE 256
+#define WORKSIZE 256
+#define WORKITEM 64
 
+using namespace cl;
 
 int main (int argc, char **argv)
 {
-    const cl::sycl::device_selector &cpu_dev = cl::sycl::cpu_selector();
-    const cl::sycl::device_selector &gpu_dev = cl::sycl::gpu_selector();
-    cl::sycl::queue q(gpu_dev);
+    const sycl::device_selector &gpu_dev = sycl::gpu_selector();
+    sycl::queue q(gpu_dev);
 
-    q.submit([&](cl::sycl::handler &h)
+    q.submit([&](sycl::handler &cgh)
         {
-            cl::sycl::accessor<int, 1, cl::sycl::access::mode::read_write, cl::sycl::access::target::local> acc = cl::sycl::accessor<int, 1,  cl::sycl::access::mode::read_write, cl::sycl::access::target::local>(cl::sycl::range<1>(SIZE), h);
+            auto acc = sycl::accessor<int, 1,  sycl::access::mode::read_write, sycl::access::target::local>(sycl::range<1>(WORKSIZE), cgh);
 
-            h.parallel_for<class kernel1>(cl::sycl::nd_range<1>(cl::sycl::range<1>(SIZE), cl::sycl::range<1>(SIZE)),
-                [=](cl::sycl::nd_item<1> i)
+            cgh.parallel_for<class kernel1>(sycl::nd_range<1>(sycl::range<1>(WORKSIZE), sycl::range<1>(WORKITEM)),
+                [=](sycl::nd_item<1> i)
                 {
                     int x = i.get_global_linear_id();
-                    int y;
-                    acc[x] = x;
-                    if ((x < (SIZE-1)) &&
-                        (acc[x+1] != (x+1)))
+                    int y = i.get_local_linear_id();
+                    acc[y] = x;
+                    i.barrier();
+                    if (acc[y] != x)
                     {
-                        printf("unexpected value: %d %d\n", acc[x+1], x+1);
+                        printf("unexpected value: %d %d\n", acc[y], x);
                     }
                 }
             );
