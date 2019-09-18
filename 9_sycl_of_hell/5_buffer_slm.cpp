@@ -1,4 +1,5 @@
 #include <CL/sycl.hpp>
+#include <bits/stdc++.h>
 
 // Inspired by Codeplay compute cpp hello-world
 int main(int argc, char** argv) {
