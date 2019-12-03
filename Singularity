@@ -1,5 +1,5 @@
-Bootstrap: shub
-From: singularityhub/centos
+Bootstrap: docker
+From: centos:7
 
 %runscript
 exec echo "dpc++ singularity tutorial image"
