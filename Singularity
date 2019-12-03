@@ -11,21 +11,14 @@ exec cat /etc/redhat-release
 
 %post
 # setup repo
-tee > /tmp/oneAPI.repo << EOF
-[oneAPI]
-name=Intel(R) oneAPI repository
-baseurl=https://yum.repos.intel.com/oneapi
-enabled=1
-gpgcheck=1
-repo_gpgcheck=1
-gpgkey=https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
-EOF
+echo -e "[oneAPI]\nname=Intel(R) oneAPI repository\nbaseurl=https://yum.repos.intel.com/oneapi\nenabled=1\ngpgcheck=1\nrepo_gpgcheck=1\ngpgkey=https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB" > /tmp/oneAPI.repo
 mv /tmp/oneAPI.repo /etc/yum.repos.d
 
+# install software
 yum update -y
 yum install -y epel-release
-yum install intel-basekit
-yum install intel-hpckit
+yum install -y intel-basekit
+yum install -y intel-hpckit
 
 # setup demo code
 mkdir -p /code
