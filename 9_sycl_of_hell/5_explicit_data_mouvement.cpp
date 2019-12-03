@@ -1,12 +1,12 @@
 #include <CL/sycl.hpp>
 
-// Inspired by Codeplay compute cpp hello-world
 int main(int argc, char** argv) {
 
+   // Sycl Accesor to host pointer copy
    const auto global_range =  (size_t) atoi(argv[1]);
    const auto local_range =  (size_t) atoi(argv[2]);
 
-   // Crrate array
+   // Create array
    int A[global_range];
 
   // Selectors determine which device kernels will be dispatched to.
