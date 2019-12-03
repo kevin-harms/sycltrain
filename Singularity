@@ -22,6 +22,11 @@ yum install -y gdb
 yum install -y python
 yum install -y intel-basekit
 yum install -y intel-hpckit
+yum install -y strace
+
+# remove unneeded icd files
+rm /etc/OpenCL/vendors/Altera.icd
+rm /etc/OpenCL/vendors/Intel_FPGA_SSG_Emulator.icd
 
 # setup demo code
 mkdir -p /code
