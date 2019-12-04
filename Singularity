@@ -17,8 +17,10 @@ mv /tmp/oneAPI.repo /etc/yum.repos.d
 # install software
 yum update -y
 yum install -y epel-release
-yum install -y git gcc gcc-c++ make cmake
-yum install -y gdb
+yum install -y centos-release-scl
+yum install -y devtoolset-8-gcc devtoolset-8-gcc-c++ devtoolset-8-gcc-gfortran
+scl enable devtoolset-8 -- bash
+yum install -y gdb git make cmake
 yum install -y python
 yum install -y intel-basekit
 yum install -y intel-hpckit
