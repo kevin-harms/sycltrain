@@ -8,3 +8,4 @@ before_install:
 script:
   - cd 9_sycl_of_hell/
   - make -j 7
+
