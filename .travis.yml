@@ -3,23 +3,7 @@ before_install:
   - sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
   - sudo add-apt-repository -y "deb https://apt.repos.intel.com/oneapi all main"
   - sudo apt-get -q update
-  - sudo apt-get install -y -o=Dpkg::Use-Pty=0 \
-intel-oneapi-tbb-devel \
-intel-oneapi-common-vars \
-intel-oneapi-common-licensing \
-intel-oneapi-ccl \
-intel-oneapi-ipp-devel \
-intel-oneapi-python \
-intel-oneapi-advisor \
-intel-oneapi-dpcpp-debugger \
-intel-oneapi-daal-devel \
-intel-oneapi-dev-utilities \
-intel-oneapi-dpcpp-compiler \
-intel-oneapi-libdpstd-devel \
-intel-oneapi-dnnl-devel \
-intel-oneapi-mkl-devel \
-intel-oneapi-vtune \
-intel-oneapi-onevpl-devel
+  - sudo apt-get install -y -o=Dpkg::Use-Pty=0 intel-oneapi-tbb-devel intel-oneapi-common-vars intel-oneapi-common-licensing intel-oneapi-ccl intel-oneapi-ipp-devel intel-oneapi-python intel-oneapi-advisor intel-oneapi-dpcpp-debugger intel-oneapi-daal-devel  intel-oneapi-dev-utilities intel-oneapi-dpcpp-compiler intel-oneapi-libdpstd-devel intel-oneapi-dnnl-devel intel-oneapi-mkl-devel intel-oneapi-vtune  intel-oneapi-onevpl-devel
 
 script:
   - cd 9_sycl_of_hell/
