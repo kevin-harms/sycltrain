@@ -5,3 +5,6 @@ before_install:
   - sudo apt-get -q update
   - sudo apt-get install intel-basekit
 
+script:
+  - cd 9_sycl_of_hell/
+  - make -j 7
