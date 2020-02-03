@@ -1,10 +1,39 @@
 #include <CL/sycl.hpp>
+#include "cxxopts.hpp"
 
-// Inspired by Codeplay compute cpp hello-world
 int main(int argc, char** argv) {
-  const auto global_range =  (size_t) atoi(argv[1]);
-  const auto local_range =  (size_t) atoi(argv[2]);
-  
+
+
+//  _                ___
+// |_) _. ._ _  _     |  ._  ._     _|_
+// |  (_| | _> (/_   _|_ | | |_) |_| |_
+//
+      
+  cxxopts::Options options("3_nd_range", " How to use 'nd_range' ");
+
+  options.add_options()
+   ("h,help", "Print help")
+   ("g,grange", "Global Range", cxxopts::value<int>() ->default_value("1"))
+   ("l,lrange", "Local Range", cxxopts::value<int>() ->default_value("1"))
+
+  ;
+
+ auto result = options.parse(argc, argv);
+
+ if (result.count("help"))
+    {
+      std::cout << options.help({"", "Group"}) << std::endl;
+      exit(0);
+    }
+
+  const auto global_range= result["grange"].as<int>();
+  const auto local_range= result["lrange"].as<int>();
+
+// ._   _|        ._ _. ._   _   _
+// | | (_|        | (_| | | (_| (/_
+//           __              _|
+
+
   // Selectors determine which device kernels will be dispatched to.
   cl::sycl::default_selector selector; 
   // Create your own or use `{cpu,gpu,accelerator}_selector`
@@ -14,11 +43,6 @@ int main(int argc, char** argv) {
   std::cout << "Running on "
             << myQueue.get_device().get_info<cl::sycl::info::device::name>()
             << "\n";
-
-// ._   _|        ._ _. ._   _   _
-// | | (_|        | (_| | | (_| (/_
-//           __              _|
-
 
   //Create a command_group to issue command to the group
   myQueue.submit([&](cl::sycl::handler& cgh) {

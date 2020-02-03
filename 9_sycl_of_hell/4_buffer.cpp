@@ -1,11 +1,38 @@
 #include <CL/sycl.hpp>
+#include "cxxopts.hpp"
 #include <vector>
 
 // Inspired by Codeplay compute cpp hello-world
 int main(int argc, char** argv) {
 
-   const auto global_range =  (size_t) atoi(argv[1]);
-   const auto local_range =  (size_t) atoi(argv[2]);
+//  _                ___
+// |_) _. ._ _  _     |  ._  ._     _|_
+// |  (_| | _> (/_   _|_ | | |_) |_| |_
+//
+
+  cxxopts::Options options("4_buffer", " How to use 'nd_range' ");
+
+  options.add_options()
+   ("h,help", "Print help")
+   ("g,grange", "Global Range", cxxopts::value<int>() ->default_value("1"))
+   ("l,lrange", "Local Range", cxxopts::value<int>() ->default_value("1"))
+
+  ;
+
+ auto result = options.parse(argc, argv);
+
+ if (result.count("help"))
+    {
+      std::cout << options.help({"", "Group"}) << std::endl;
+      exit(0);
+    }
+
+  const auto global_range= result["grange"].as<int>();
+  const auto local_range= result["lrange"].as<int>();
+//  _       _   _       
+// |_)    _|_ _|_ _  ._ 
+// |_) |_| |   | (/_ |  
+//                      
 
    // Crrate array
    std::vector<int> A;
@@ -17,7 +44,7 @@ int main(int argc, char** argv) {
   {
   // Create sycl buffer.
   // Trivia: What happend if we create the buffer in the outer scope?
-  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA(A.data(), global_range);
+  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA(A.data(), A.size());
 
   cl::sycl::queue myQueue(selector);
   std::cout << "Running on "
@@ -36,8 +63,7 @@ int main(int argc, char** argv) {
       accessorA[world_rank] = world_rank;
     }); // End of the kernel function
   }); // End of the queue commands
-  }  // End of scope, wait for the queued work to stop. 
-     // Can also use  myQueue.wait_and_throw();
+ }  // End of scope, wait for the queued work to stop. 
 
 
   for (size_t i = 0; i < global_range; i++) 
