@@ -1,6 +1,19 @@
 #include "cxxopts.hpp"
 #include <CL/sycl.hpp>
 
+class generator_kernel_hw {
+
+ 	public:
+	  generator_kernel_hw(cl::sycl::stream cout)
+    		: m_cout(cout) {}
+
+	void operator()(cl::sycl::id<1> idx) {
+	      m_cout << "Hello, World Functor: World rank " << idx << cl::sycl::endl;
+	}
+
+	private:
+		cl::sycl::stream m_cout;
+};
 int main(int argc, char** argv) {
 
 //  _                ___                
@@ -8,7 +21,7 @@ int main(int argc, char** argv) {
 // |  (_| | _> (/_   _|_ | | |_) |_| |_ 
 //                           |          
 
-  cxxopts::Options options("2_parallel_for", " How to use 'parallel_for' and 'range' ");
+  cxxopts::Options options("2_parallel_for", " How to use functor and not lambda ");
 
   options.add_options()
    ("h,help", "Print help")
@@ -39,15 +52,10 @@ int main(int argc, char** argv) {
             << myQueue.get_device().get_info<cl::sycl::info::device::name>()
             << "\n";
   
-  //Create a command_group to issue command to the group
   myQueue.submit([&](cl::sycl::handler& cgh) {
     cl::sycl::stream cout(1024, 256, cgh);
-    // #pragma omp parallel for
-    // for(int idx[0]=0; idx[0]++; idx[0]< global_range)
-    cgh.parallel_for<class hello_world>(cl::sycl::range<1>(global_range), 
-                                        [=](cl::sycl::id<1> idx) {
-       cout << "Hello, World: World rank " << idx << cl::sycl::endl;
-    }); // End of the kernel function
+    auto hw_kernel = generator_kernel_hw(cout);
+    cgh.parallel_for(cl::sycl::range<1>(global_range), hw_kernel);
   }); // End of the queue commands 
   }  // End of scope, wait for the queued work to stop. 
   return 0;
