@@ -8,7 +8,7 @@ make -j 7
 
 - `tiny_sycl_info.cpp` How to get information on platform and devices ( `./0_tiny_sycl_info`)
 - `my_first_kernel.cpp`  How to create queues and command groups ( `./1_my_first_kernel`)
-- `parallel_for.cpp` How to use a parralle\_for and range (`./2_parallel_for 8`)
+- `parallel_for.cpp` How to use `parallel\_for` and `range` (`./2_parallel_for 8`)
 - `nd_range`. How to ru se a nd\_range (`./3_nd_range 8 2`)
 - `buffer`  How to data-transfer (`./4_buffer 8 1`)
 - `matrix_mul_local_intel` Local Shared Memory by Intel.

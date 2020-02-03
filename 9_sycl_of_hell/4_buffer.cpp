@@ -1,4 +1,5 @@
 #include <CL/sycl.hpp>
+#include <vector>
 
 // Inspired by Codeplay compute cpp hello-world
 int main(int argc, char** argv) {
@@ -7,7 +8,8 @@ int main(int argc, char** argv) {
    const auto local_range =  (size_t) atoi(argv[2]);
 
    // Crrate array
-   int A[global_range];
+   std::vector<int> A;
+   A.resize(global_range);
 
   // Selectors determine which device kernels will be dispatched to.
   cl::sycl::default_selector selector; 
@@ -15,7 +17,7 @@ int main(int argc, char** argv) {
   {
   // Create sycl buffer.
   // Trivia: What happend if we create the buffer in the outer scope?
-  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA(A, global_range);
+  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA(A.data(), global_range);
 
   cl::sycl::queue myQueue(selector);
   std::cout << "Running on "
@@ -37,7 +39,8 @@ int main(int argc, char** argv) {
   }  // End of scope, wait for the queued work to stop. 
      // Can also use  myQueue.wait_and_throw();
 
- for (size_t i = 0; i < global_range; i++) 
-        std::cout<< "A[ " << i <<" ] = " << A[i] << std::endl;
+
+  for (size_t i = 0; i < global_range; i++) 
+    std::cout<< "A[ " << i <<" ] = " << A[i] << std::endl;
   return 0;
 }
