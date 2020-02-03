@@ -2,6 +2,30 @@
 #include "cxxopts.hpp"
 #include <vector>
 
+template <class T>
+class Matrix
+{
+public:
+    Matrix(size_t rows, size_t cols) : mRows(rows),
+  mCols(cols),
+  mData(rows * cols)
+{};
+    T& operator()(size_t i, size_t j){
+    return mData[i * mCols + j];
+};
+    T operator()(size_t i, size_t j) const{
+    return mData[i * mCols + j];
+};
+   T* data(){
+   return mData.data();
+};
+private:
+    size_t mRows;
+    size_t mCols;
+    std::vector<T> mData;
+};
+
+
 // Inspired by Codeplay compute cpp hello-world
 int main(int argc, char** argv) {
 
@@ -34,8 +58,7 @@ int main(int argc, char** argv) {
 // |_) |_| |   | (/_ |  
 //                      
 
-   // Crrate array
-   std::vector<int> A(global_range);
+  Matrix<int> A(global_range,global_range);
 
   // Selectors determine which device kernels will be dispatched to.
   cl::sycl::default_selector selector; 
@@ -43,7 +66,7 @@ int main(int argc, char** argv) {
   {
   // Create sycl buffer.
   // Trivia: What happend if we create the buffer in the outer scope?
-  cl::sycl::buffer<cl::sycl::cl_int, 1> bufferA(A.data(), A.size());
+  cl::sycl::buffer<int, 2> bufferA(A.data(), cl::sycl::range<2>(global_range, global_range));
 
   cl::sycl::queue myQueue(selector);
   std::cout << "Running on "
@@ -55,17 +78,22 @@ int main(int argc, char** argv) {
      //Create an accesor for the sycl buffer. Trust me, use auto.
      auto accessorA = bufferA.get_access<cl::sycl::access::mode::discard_write>(cgh);
     // Nd range allow use to access information
-    cgh.parallel_for<class hello_world>(cl::sycl::nd_range<1>{cl::sycl::range<1>(global_range), 
-                                                              cl::sycl::range<1>(local_range) }, 
-                                        [=](cl::sycl::nd_item<1> idx) {
-      const int world_rank = idx.get_global_id(0);
-      accessorA[world_rank] = world_rank;
+    cl::sycl::range<2> global(global_range, global_range);
+    cl::sycl::range<2> local(local_range, local_range);
+
+    cgh.parallel_for<class hello_world>(cl::sycl::nd_range<2>(global, local), 
+                                        [=](cl::sycl::nd_item<2> idx) {
+      const int i = idx.get_global_id(0);
+      const int j = idx.get_global_id(1);
+      const int n = idx.get_global_linear_id();
+      accessorA[i][j] = n;
     }); // End of the kernel function
   }); // End of the queue commands
  }  // End of scope, wait for the queued work to stop. 
 
 
-  for (size_t i = 0; i < global_range; i++) 
-    std::cout<< "A[ " << i <<" ] = " << A[i] << std::endl;
+  for (size_t i = 0; i < global_range; i++)
+  for (size_t j = 0; j < global_range; j++)
+    	std::cout<< "A(" << i << "," << j <<") = " << A(i,j) << std::endl;
   return 0;
 }
