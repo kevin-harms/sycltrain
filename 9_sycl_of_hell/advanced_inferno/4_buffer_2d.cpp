@@ -2,6 +2,8 @@
 #include "cxxopts.hpp"
 #include <vector>
 
+namespace sycl = cl::sycl;
+
 template <class T>
 class Matrix
 {
@@ -39,8 +41,6 @@ int main(int argc, char** argv) {
   options.add_options()
    ("h,help", "Print help")
    ("g,grange", "Global Range", cxxopts::value<int>() ->default_value("1"))
-   ("l,lrange", "Local Range", cxxopts::value<int>() ->default_value("1"))
-
   ;
 
  auto result = options.parse(argc, argv);
@@ -52,7 +52,6 @@ int main(int argc, char** argv) {
     }
 
   const auto global_range= result["grange"].as<int>();
-  const auto local_range= result["lrange"].as<int>();
 //  _       _   _       
 // |_)    _|_ _|_ _  ._ 
 // |_) |_| |   | (/_ |  
@@ -61,28 +60,27 @@ int main(int argc, char** argv) {
   Matrix<int> A(global_range,global_range);
 
   // Selectors determine which device kernels will be dispatched to.
-  cl::sycl::default_selector selector; 
+  sycl::default_selector selector; 
   // Create your own or use `{cpu,gpu,accelerator}_selector`
   {
   // Create sycl buffer.
   // Trivia: What happend if we create the buffer in the outer scope?
-  cl::sycl::buffer<int, 2> bufferA(A.data(), cl::sycl::range<2>(global_range, global_range));
+  sycl::buffer<int, 2> bufferA(A.data(), sycl::range<2>(global_range, global_range));
 
-  cl::sycl::queue myQueue(selector);
+  sycl::queue myQueue(selector);
   std::cout << "Running on "
-            << myQueue.get_device().get_info<cl::sycl::info::device::name>()
+            << myQueue.get_device().get_info<sycl::info::device::name>()
             << "\n";
 
   //Create a command_group to issue command to the group
-  myQueue.submit([&](cl::sycl::handler& cgh) {
+  myQueue.submit([&](sycl::handler& cgh) {
      //Create an accesor for the sycl buffer. Trust me, use auto.
-     auto accessorA = bufferA.get_access<cl::sycl::access::mode::discard_write>(cgh);
+     auto accessorA = bufferA.get_access<sycl::access::mode::discard_write>(cgh);
     // Nd range allow use to access information
-    cl::sycl::range<2> global(global_range, global_range);
-    cl::sycl::range<2> local(local_range, local_range);
+    sycl::range<2> global(global_range, global_range);
 
-    cgh.parallel_for<class hello_world>(cl::sycl::nd_range<2>(global, local), 
-                                        [=](cl::sycl::nd_item<2> idx) {
+    cgh.parallel_for<class hello_world>(sycl::range<2>(global), 
+                                        [=](sycl::nd_item<2> idx) {
       const int i = idx.get_global_id(0);
       const int j = idx.get_global_id(1);
       const int n = idx.get_global_linear_id();

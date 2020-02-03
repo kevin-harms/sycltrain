@@ -10,8 +10,7 @@ int main()
    // |_) |  _. _|_ _|_ _  ._ ._ _    ()    | \  _     o  _  _
    // |   | (_|  |_  | (_) |  | | |   (_X   |_/ (/_ \/ | (_ (/_
    //
-   printf(">>> List Platform and device\n");
-
+   std::cout << "List Platforms and Devices" << std::endl;
    std::vector<sycl::platform> platforms = cl::sycl::platform::get_platforms();
    for(const auto& plat : platforms){
         // get_info is a template. So we pass the type as an `arguments`.

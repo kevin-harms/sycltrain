@@ -1,18 +1,20 @@
 #include "cxxopts.hpp"
 #include <CL/sycl.hpp>
 
+namespace sycl = cl::sycl;
+
 class generator_kernel_hw {
 
  	public:
-	  generator_kernel_hw(cl::sycl::stream cout)
+	  generator_kernel_hw(sycl::stream cout)
     		: m_cout(cout) {}
 
-	void operator()(cl::sycl::id<1> idx) {
-	      m_cout << "Hello, World Functor: World rank " << idx << cl::sycl::endl;
+	void operator()(sycl::id<1> idx) {
+	      m_cout << "Hello, World Functor: World rank " << idx << sycl::endl;
 	}
 
 	private:
-		cl::sycl::stream m_cout;
+		sycl::stream m_cout;
 };
 int main(int argc, char** argv) {
 
@@ -44,18 +46,18 @@ int main(int argc, char** argv) {
 
 
   // Selectors determine which device kernels will be dispatched to.
-  cl::sycl::default_selector selector; 
+  sycl::default_selector selector; 
   {
   
-  cl::sycl::queue myQueue(selector);
+  sycl::queue myQueue(selector);
   std::cout << "Running on "
-            << myQueue.get_device().get_info<cl::sycl::info::device::name>()
+            << myQueue.get_device().get_info<sycl::info::device::name>()
             << "\n";
   
-  myQueue.submit([&](cl::sycl::handler& cgh) {
-    cl::sycl::stream cout(1024, 256, cgh);
+  myQueue.submit([&](sycl::handler& cgh) {
+    sycl::stream cout(1024, 256, cgh);
     auto hw_kernel = generator_kernel_hw(cout);
-    cgh.parallel_for(cl::sycl::range<1>(global_range), hw_kernel);
+    cgh.parallel_for(sycl::range<1>(global_range), hw_kernel);
   }); // End of the queue commands 
   }  // End of scope, wait for the queued work to stop. 
   return 0;
