@@ -23,10 +23,10 @@ int main (int argc, char **argv)
                     int y = i.get_local_linear_id();
                     acc[y] = x;
                     i.barrier();
-                    if (acc[y] != x)
-                    {
-                        printf("unexpected value: %d %d\n", acc[y], x);
-                    }
+//                    if (acc[y] != x)
+//                    {
+//                        printf("unexpected value: %d %d\n", acc[y], x);
+//                    }
                 }
             );
         }
